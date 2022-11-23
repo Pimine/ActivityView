@@ -11,8 +11,20 @@ public extension View {
     /// - Parameters:
     ///   - item: The item to use for this activity
     ///   - onComplete: When the sheet is dismissed, the this will be called with the result
-    func activitySheet(_ item: Binding<ActivityItem?>, permittedArrowDirections: UIPopoverArrowDirection = .any, onComplete: UIActivityViewController.CompletionWithItemsHandler? = nil) -> some View {
-        background(ActivityView(item: item, permittedArrowDirections: permittedArrowDirections, onComplete: onComplete))
+    func activitySheet(
+        _ item: Binding<ActivityItem?>,
+        permittedArrowDirections: UIPopoverArrowDirection = .any,
+        sourceRect: CGRect,
+        onComplete: UIActivityViewController.CompletionWithItemsHandler? = nil
+    ) -> some View {
+        background(
+            ActivityView(
+                item: item,
+                permittedArrowDirections: permittedArrowDirections,
+                sourceRect: sourceRect,
+                onComplete: onComplete
+            )
+        )
     }
 
 }
@@ -21,16 +33,18 @@ private struct ActivityView: UIViewControllerRepresentable {
 
     @Binding var item: ActivityItem?
     private var permittedArrowDirections: UIPopoverArrowDirection
+    private var sourceRect: CGRect
     private var completion: UIActivityViewController.CompletionWithItemsHandler?
 
-    public init(item: Binding<ActivityItem?>, permittedArrowDirections: UIPopoverArrowDirection, onComplete: UIActivityViewController.CompletionWithItemsHandler? = nil) {
+    public init(item: Binding<ActivityItem?>, permittedArrowDirections: UIPopoverArrowDirection, sourceRect: CGRect, onComplete: UIActivityViewController.CompletionWithItemsHandler? = nil) {
         _item = item
+        self.sourceRect = sourceRect
         self.permittedArrowDirections = permittedArrowDirections
         self.completion = onComplete
     }
 
     func makeUIViewController(context: Context) -> ActivityViewControllerWrapper {
-        ActivityViewControllerWrapper(item: $item, permittedArrowDirections: permittedArrowDirections, completion: completion)
+        ActivityViewControllerWrapper(item: $item, permittedArrowDirections: permittedArrowDirections, sourceRect: sourceRect, completion: completion)
     }
 
     func updateUIViewController(_ controller: ActivityViewControllerWrapper, context: Context) {
@@ -45,11 +59,18 @@ private final class ActivityViewControllerWrapper: UIViewController {
 
     var item: Binding<ActivityItem?>
     var permittedArrowDirections: UIPopoverArrowDirection
+    var sourceRect: CGRect
     var completion: UIActivityViewController.CompletionWithItemsHandler?
 
-    init(item: Binding<ActivityItem?>, permittedArrowDirections: UIPopoverArrowDirection, completion: UIActivityViewController.CompletionWithItemsHandler?) {
+    init(
+        item: Binding<ActivityItem?>,
+        permittedArrowDirections: UIPopoverArrowDirection,
+        sourceRect: CGRect,
+        completion: UIActivityViewController.CompletionWithItemsHandler?
+    ) {
         self.item = item
         self.permittedArrowDirections = permittedArrowDirections
+        self.sourceRect = sourceRect
         self.completion = completion
         super.init(nibName: nil, bundle: nil)
     }
@@ -72,6 +93,7 @@ private final class ActivityViewControllerWrapper: UIViewController {
                 controller.excludedActivityTypes = item.wrappedValue?.excludedTypes
                 controller.popoverPresentationController?.permittedArrowDirections = permittedArrowDirections
                 controller.popoverPresentationController?.sourceView = view
+                controller.popoverPresentationController?.sourceRect = sourceRect
                 controller.completionWithItemsHandler = { [weak self] (activityType, success, items, error) in
                     self?.item.wrappedValue = nil
                     self?.completion?(activityType, success, items, error)
