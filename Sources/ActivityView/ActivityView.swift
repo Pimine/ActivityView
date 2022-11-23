@@ -14,7 +14,7 @@ public extension View {
     func activitySheet(
         _ item: Binding<ActivityItem?>,
         permittedArrowDirections: UIPopoverArrowDirection = .any,
-        sourceRect: CGRect,
+        sourceRect: CGRect = .zero,
         onComplete: UIActivityViewController.CompletionWithItemsHandler? = nil
     ) -> some View {
         background(
